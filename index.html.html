@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="th" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายงานบัญชี - การเงิน (แดชบอร์ด / Dashboard)</title>
+    
+    <!-- Google Fonts: Prompt for Modern Thai Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.5);
+            border-radius: 4px;
+        }
+        
+        /* Glassmorphism effects */
+        .glass-card {
+            backdrop-filter: blur(8px);
+        }
+        
+        /* Smooth transitions */
+        .hover-lift {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Top Banner & Navigation Header -->
+    <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                
+                <!-- Title & Brand Logo -->
+                <div class="flex items-center space-x-3">
+                    <div class="p-2.5 bg-gradient-to-tr from-teal-500 to-emerald-600 rounded-xl text-white shadow-md shadow-teal-500/20">
+                        <i class="fa-solid fa-chart-line text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-teal-600 via-emerald-600 to-indigo-600 dark:from-teal-400 dark:via-emerald-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                            📊 รายงานบัญชี - การเงิน (แดชบอร์ด)
+                        </h1>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
+                            Financial & Accounting Dashboard Navigation Hub
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Right Action Buttons -->
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    
+                    <!-- Edit Mode Toggle -->
+                    <button id="edit-mode-btn" onclick="toggleEditMode()" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 transition flex items-center space-x-1.5 shadow-sm">
+                        <i class="fa-solid fa-pen-to-square text-amber-500"></i>
+                        <span class="hidden sm:inline">โหมดแก้ไขลิงก์</span>
+                    </button>
+
+                    <!-- Add Link Button -->
+                    <button onclick="openAddModal()" class="px-3 py-2 rounded-lg text-xs sm:text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center space-x-1.5 shadow-sm shadow-emerald-600/20">
+                        <i class="fa-solid fa-plus"></i>
+                        <span class="hidden sm:inline">เพิ่มลิงก์</span>
+                    </button>
+
+                    <!-- Dark / Light Theme Switcher -->
+                    <button onclick="toggleDarkMode()" class="p-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition border border-slate-200 dark:border-slate-800" title="เปลี่ยนธีม สว่าง/มืด">
+                        <i id="theme-icon" class="fa-solid fa-moon text-lg"></i>
+                    </button>
+
+                    <!-- Reset Defaults Button -->
+                    <button onclick="confirmReset()" class="p-2.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition" title="รีเซ็ตค่าเริ่มต้น">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Top Search Bar & Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+            
+            <!-- Quick Search Input -->
+            <div class="relative md:col-span-2">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass text-lg"></i>
+                </div>
+                <input type="text" id="search-input" onkeyup="filterReports()" placeholder="พิมพ์ชื่อรายงาน เช่น 'รายได้', 'งบกำไรขาดทุน', 'เช็ค' เพื่อค้นหาด่วน..." 
+                    class="w-full pl-11 pr-10 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl text-sm placeholder-slate-400 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm transition">
+                <button id="clear-search" onclick="clearSearch()" class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Stats Badge Bar -->
+            <div class="flex items-center justify-between sm:justify-end space-x-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div class="flex items-center space-x-1.5 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <i class="fa-solid fa-folder-tree text-emerald-500"></i>
+                    <span>4 หมวดหมู่</span>
+                </div>
+                <div class="flex items-center space-x-1.5 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <i class="fa-solid fa-link text-indigo-500"></i>
+                    <span id="total-links-count">17 ลิงก์</span>
+                </div>
+                <div class="flex items-center space-x-1.5 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <i class="fa-solid fa-star text-amber-500"></i>
+                    <span id="fav-links-count">0 ติดดาว</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Favorites Section (Shows only if items are starred) -->
+        <div id="favorites-container" class="hidden space-y-3">
+            <div class="flex items-center space-x-2 text-amber-600 dark:text-amber-400 font-semibold text-sm">
+                <i class="fa-solid fa-star"></i>
+                <h2>รายการโปรดที่ปักหมุดไว้ (Quick Access)</h2>
+            </div>
+            <div id="favorites-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                <!-- Dynamically injected favorite links -->
+            </div>
+        </div>
+
+        <!-- Main Categories Grid (4 Primary Cards matching image categories) -->
+        <div id="cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
+            <!-- Dynamic Category Cards rendered via JavaScript -->
+        </div>
+
+        <!-- No Search Results State -->
+        <div id="no-results" class="hidden text-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-800">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                <i class="fa-solid fa-folder-open text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300">ไม่พบรายงานที่คุณค้นหา</h3>
+            <p class="text-slate-500 text-xs sm:text-sm mt-1">ลองใช้คำค้นหาอื่น หรือล้างช่องค้นหาเพื่อดูรายงานทั้งหมด</p>
+            <button onclick="clearSearch()" class="mt-4 px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 rounded-lg text-xs font-medium transition">
+                ล้างคำค้นหา
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Modal: Add / Edit Link Form -->
+    <div id="link-modal" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 transform transition-all scale-100">
+            
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+                <h3 id="modal-title" class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center space-x-2">
+                    <i class="fa-solid fa-link text-emerald-500"></i>
+                    <span>จัดการลิงก์รายงาน</span>
+                </h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <form id="link-form" onsubmit="saveLink(event)" class="space-y-4 mt-4">
+                <input type="hidden" id="edit-link-id">
+                
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">หมวดหมู่รายงาน</label>
+                    <select id="link-category" required class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <option value="accounting">🟧 บัญชี (รายได้ - ค่าใช้จ่าย)</option>
+                        <option value="finance">🟩 การเงิน</option>
+                        <option value="tasks">🟦 งานอื่นที่มอบหมาย</option>
+                        <option value="company">🟧 งบการเงินบริษัท (สำนักงานบัญชี)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">ชื่อรายงาน</label>
+                    <input type="text" id="link-title" required placeholder="เช่น รายได้ ปี 2569" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">URL / ลิงก์ปลายทาง (Google Sheet, Looker, Web App)</label>
+                    <input type="url" id="link-url" required placeholder="https://docs.google.com/..." class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">ไอคอน (Font Awesome Class)</label>
+                    <div class="flex space-x-2">
+                        <input type="text" id="link-icon" placeholder="fa-solid fa-file-lines" class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <div id="icon-preview" class="w-10 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300">
+                            <i class="fa-solid fa-file-lines"></i>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1">ตัวอย่าง: fa-solid fa-chart-line, fa-solid fa-receipt, fa-solid fa-wallet</p>
+                </div>
+
+                <div class="pt-4 flex justify-end space-x-2 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-medium hover:bg-slate-100 dark:hover:bg-slate-800">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition shadow-md shadow-emerald-600/20">
+                        บันทึกข้อมูล
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Confirmation Prompt -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-center space-y-4">
+            <div class="w-12 h-12 mx-auto rounded-full bg-red-100 dark:bg-red-950/50 flex items-center justify-center text-red-600 dark:text-red-400">
+                <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+            </div>
+            <h3 id="confirm-title" class="text-base font-bold text-slate-800 dark:text-slate-100">ยืนยันการทำรายการ</h3>
+            <p id="confirm-message" class="text-xs text-slate-500 dark:text-slate-400">คุณแน่ใจหรือไม่ว่าต้องการดำเนินการนี้?</p>
+            <div class="flex space-x-2 pt-2">
+                <button onclick="closeConfirmModal()" class="w-1/2 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-medium hover:bg-slate-100 dark:hover:bg-slate-800">
+                    ยกเลิก
+                </button>
+                <button id="confirm-action-btn" class="w-1/2 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition">
+                    ยืนยัน
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Preview / Toast Notification Container -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 text-xs sm:text-sm font-medium">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 dark:text-emerald-600"></i>
+        <span id="toast-message">แจ้งเตือนสำเร็จ</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-auto py-6 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400">
+        <p>© 2026 ระบบแดชบอร์ดศูนย์รวมรายงานบัญชีและการเงิน | ออกแบบและปรับปรุงเพื่อการทำงานแบบมืออาชีพ</p>
+    </footer>
+
+    <script>
+        // Default seed data based on the provided dashboard image
+        const initialCategories = [
+            {
+                id: "accounting",
+                title: "บัญชี (รายได้ - ค่าใช้จ่าย)",
+                icon: "fa-solid fa-calculator",
+                theme: "amber",
+                headerGradient: "from-amber-600 to-amber-700",
+                badgeBg: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300",
+                cardBorder: "border-amber-200 dark:border-amber-900/40",
+                items: [
+                    { id: "acc-1", title: "รายได้ ปี 2569", url: "https://example.com/reports/income-2569", icon: "fa-regular fa-file-lines", fav: false },
+                    { id: "acc-2", title: "งบกำไรขาดทุน ปี 2569", url: "https://example.com/reports/pnl-2569", icon: "fa-solid fa-chart-line", fav: false },
+                    { id: "acc-3", title: "สรุปรายรับ - จ่าย (ตามไซต์งาน)", url: "https://example.com/reports/site-summary", icon: "fa-solid fa-building-user", fav: false },
+                    { id: "acc-4", title: "เปรียบเทียบรายได้ + ค่าใช้จ่าย (รายไตรมาส)", url: "https://example.com/reports/quarterly-compare", icon: "fa-solid fa-chart-column", fav: false },
+                    { id: "acc-5", title: "สินทรัพย์", url: "https://example.com/reports/assets", icon: "fa-solid fa-boxes-stacked", fav: false },
+                    { id: "acc-6", title: "ค่าแรงช่าง + ค่าแรง DC ประจำปี 2569", url: "https://example.com/reports/wages-2569", icon: "fa-solid fa-user-gear", fav: false },
+                    { id: "acc-7", title: "สรุปรายงานช่าง ปี 2569", url: "https://example.com/reports/tech-summary-2569", icon: "fa-solid fa-clipboard-check", fav: false },
+                    { id: "acc-8", title: "รายงานน้ำมันรถ ปี 2569", url: "https://example.com/reports/fuel-2569", icon: "fa-solid fa-gas-pump", fav: false },
+                    { id: "acc-9", title: "รายงานค่าใช้จ่ายนอกระบบ", url: "https://example.com/reports/off-system-expenses", icon: "fa-solid fa-receipt", fav: false }
+                ]
+            },
+            {
+                id: "finance",
+                title: "การเงิน",
+                icon: "fa-solid fa-wallet",
+                theme: "emerald",
+                headerGradient: "from-emerald-700 to-emerald-800",
+                badgeBg: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300",
+                cardBorder: "border-emerald-200 dark:border-emerald-900/40",
+                items: [
+                    { id: "fin-1", title: "แผนการชำระ บัญชี - การเงิน", url: "https://example.com/reports/payment-plan", icon: "fa-regular fa-calendar-days", fav: false },
+                    { id: "fin-2", title: "เงินสดย่อย", url: "https://example.com/reports/petty-cash", icon: "fa-solid fa-money-bill-wave", fav: false },
+                    { id: "fin-3", title: "รายงานการใช้เช็ค", url: "https://example.com/reports/cheque-log", icon: "fa-solid fa-money-check-dollar", fav: false },
+                    { id: "fin-4", title: "รายงานสินเชื่อดอกเบี้ย OD", url: "https://example.com/reports/od-loan-interest", icon: "fa-solid fa-building-columns", fav: false },
+                    { id: "fin-5", title: "รายงานหนังสือค้ำประกัน (LG)", url: "https://example.com/reports/lg-guarantee", icon: "fa-solid fa-shield-halved", fav: false }
+                ]
+            },
+            {
+                id: "tasks",
+                title: "งานอื่นที่มอบหมาย",
+                icon: "fa-solid fa-list-check",
+                theme: "indigo",
+                headerGradient: "from-indigo-700 to-indigo-800",
+                badgeBg: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300",
+                cardBorder: "border-indigo-200 dark:border-indigo-900/40",
+                items: [
+                    { id: "task-1", title: "รายงานค่าเช่าหอพัก", url: "https://example.com/reports/dorm-rent", icon: "fa-solid fa-house-user", fav: false },
+                    { id: "task-2", title: "รายงานตู้กดน้ำ", url: "https://example.com/reports/water-dispenser", icon: "fa-solid fa-faucet-drip", fav: false }
+                ]
+            },
+            {
+                id: "company",
+                title: "งบการเงินบริษัท (สำนักงานบัญชี)",
+                icon: "fa-solid fa-chart-pie",
+                theme: "orange",
+                headerGradient: "from-orange-600 to-amber-700",
+                badgeBg: "bg-orange-100 text-orange-800 dark:bg-orange-950/60 dark:text-orange-300",
+                cardBorder: "border-orange-200 dark:border-orange-900/40",
+                items: [
+                    { id: "comp-1", title: "งบกำไรขาดทุนประจำปี (ประมาณการ)", url: "https://example.com/reports/annual-pnl-estimate", icon: "fa-solid fa-file-invoice-dollar", fav: false }
+                ]
+            }
+        ];
+
+        // Application State
+        let categories = [];
+        let isEditMode = false;
+
+        // Load data from LocalStorage or use defaults
+        function initApp() {
+            const savedData = localStorage.getItem('fin_dashboard_reports');
+            if (savedData) {
+                try {
+                    categories = JSON.parse(savedData);
+                } catch (e) {
+                    categories = JSON.parse(JSON.stringify(initialCategories));
+                }
+            } else {
+                categories = JSON.parse(JSON.stringify(initialCategories));
+            }
+
+            // Init Dark Mode
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon').className = 'fa-solid fa-sun text-amber-400';
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('theme-icon').className = 'fa-solid fa-moon text-slate-600';
+            }
+
+            renderDashboard();
+            setupIconPreviewListener();
+        }
+
+        // Save categories to LocalStorage
+        function saveData() {
+            localStorage.setItem('fin_dashboard_reports', JSON.stringify(categories));
+            renderDashboard();
+        }
+
+        // Toggle Dark / Light Theme
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const themeIcon = document.getElementById('theme-icon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                themeIcon.className = 'fa-solid fa-moon text-slate-600';
+                showToast('เปลี่ยนเป็นโหมดสว่าง', 'fa-sun');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                themeIcon.className = 'fa-solid fa-sun text-amber-400';
+                showToast('เปลี่ยนเป็นโหมดมืด', 'fa-moon');
+            }
+        }
+
+        // Toggle Edit Mode UI
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const btn = document.getElementById('edit-mode-btn');
+            if (isEditMode) {
+                btn.classList.add('bg-amber-100', 'border-amber-400', 'text-amber-800', 'dark:bg-amber-950/60', 'dark:text-amber-300');
+                showToast('เปิดโหมดแก้ไข: คลิกปุ่มดินสอหรือถังขยะในลิงก์เพื่อปรับแต่ง', 'fa-pen-to-square');
+            } else {
+                btn.classList.remove('bg-amber-100', 'border-amber-400', 'text-amber-800', 'dark:bg-amber-950/60', 'dark:text-amber-300');
+                showToast('ปิดโหมดแก้ไขเรียบร้อยแล้ว', 'fa-check');
+            }
+            renderDashboard();
+        }
+
+        // Render Dashboard HTML
+        function renderDashboard() {
+            const container = document.getElementById('cards-container');
+            const favoritesContainer = document.getElementById('favorites-container');
+            const favoritesList = document.getElementById('favorites-list');
+            
+            container.innerHTML = '';
+            favoritesList.innerHTML = '';
+
+            let totalLinks = 0;
+            let favLinks = [];
+
+            categories.forEach(cat => {
+                totalLinks += cat.items.length;
+                
+                // Collect Favorites
+                cat.items.forEach(item => {
+                    if (item.fav) {
+                        favLinks.push({ ...item, categoryTitle: cat.title });
+                    }
+                });
+
+                // Build Card Container
+                const card = document.createElement('div');
+                card.className = `glass-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-all border ${cat.cardBorder} overflow-hidden flex flex-col`;
+                card.setAttribute('data-category-id', cat.id);
+
+                // Card Header Banner
+                card.innerHTML = `
+                    <div class="px-4 py-3.5 bg-gradient-to-r ${cat.headerGradient} text-white flex items-center justify-between shadow-sm">
+                        <div class="flex items-center space-x-2.5">
+                            <i class="${cat.icon} text-lg opacity-90"></i>
+                            <h2 class="font-semibold text-sm sm:text-base leading-tight">${cat.title}</h2>
+                        </div>
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md font-medium">
+                            ${cat.items.length}
+                        </span>
+                    </div>
+                    <div class="p-3 sm:p-4 space-y-2 flex-grow card-items-list">
+                        ${cat.items.length === 0 ? '<p class="text-xs text-slate-400 text-center py-4">ยังไม่มีลิงก์ในหมวดหมู่นี้</p>' : ''}
+                    </div>
+                `;
+
+                const listContainer = card.querySelector('.card-items-list');
+
+                // Render Link Items
+                cat.items.forEach(item => {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'group relative flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700/60';
+                    itemEl.setAttribute('data-title', item.title.toLowerCase());
+
+                    itemEl.innerHTML = `
+                        <a href="${item.url}" target="_blank" onclick="onLinkClick(event, '${item.title}', '${item.url}')" class="flex items-center space-x-3 flex-grow min-w-0 pr-2">
+                            <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 group-hover:bg-emerald-50 dark:group-hover:bg-emerald-950/40 text-slate-600 dark:text-slate-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 flex items-center justify-center transition flex-shrink-0">
+                                <i class="${item.icon || 'fa-solid fa-link'} text-sm"></i>
+                            </div>
+                            <span class="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">
+                                ${item.title}
+                            </span>
+                            <i class="fa-solid fa-arrow-right text-xs text-slate-300 dark:text-slate-600 group-hover:text-blue-500 transform group-hover:translate-x-1 transition flex-shrink-0"></i>
+                        </a>
+
+                        <div class="flex items-center space-x-1 ${isEditMode ? '' : 'opacity-0 group-hover:opacity-100'} transition-opacity">
+                            <button onclick="toggleFav('${cat.id}', '${item.id}')" class="p-1.5 text-xs text-slate-400 hover:text-amber-500 transition" title="${item.fav ? 'ยกเลิกติดดาว' : 'ติดดาวเป็นรายการโปรด'}">
+                                <i class="${item.fav ? 'fa-solid text-amber-500' : 'fa-regular'} fa-star"></i>
+                            </button>
+                            ${isEditMode ? `
+                                <button onclick="openEditModal('${cat.id}', '${item.id}')" class="p-1.5 text-xs text-slate-400 hover:text-indigo-500 transition" title="แก้ไข">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button onclick="confirmDeleteItem('${cat.id}', '${item.id}', '${item.title}')" class="p-1.5 text-xs text-slate-400 hover:text-red-500 transition" title="ลบ">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    `;
+
+                    listContainer.appendChild(itemEl);
+                });
+
+                container.appendChild(card);
+            });
+
+            // Update Header Metrics
+            document.getElementById('total-links-count').innerText = `${totalLinks} ลิงก์`;
+            document.getElementById('fav-links-count').innerText = `${favLinks.length} ติดดาว`;
+
+            // Render Favorites Bar
+            if (favLinks.length > 0) {
+                favoritesContainer.classList.remove('hidden');
+                favLinks.forEach(fav => {
+                    const favEl = document.createElement('a');
+                    favEl.href = fav.url;
+                    favEl.target = '_blank';
+                    favEl.onclick = (e) => onLinkClick(e, fav.title, fav.url);
+                    favEl.className = 'flex items-center space-x-3 p-3 bg-gradient-to-r from-amber-500/10 to-orange-500/10 dark:from-amber-950/40 dark:to-orange-950/40 border border-amber-200 dark:border-amber-800/50 rounded-xl hover:shadow-md hover:border-amber-400 transition group';
+                    favEl.innerHTML = `
+                        <div class="p-2 bg-amber-500 text-white rounded-lg shadow-sm">
+                            <i class="${fav.icon || 'fa-solid fa-star'} text-xs"></i>
+                        </div>
+                        <div class="min-w-0 flex-grow">
+                            <h4 class="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate group-hover:text-amber-600 dark:group-hover:text-amber-400">${fav.title}</h4>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">${fav.categoryTitle}</p>
+                        </div>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-xs text-amber-500 opacity-60 group-hover:opacity-100"></i>
+                    `;
+                    favoritesList.appendChild(favEl);
+                });
+            } else {
+                favoritesContainer.classList.add('hidden');
+            }
+
+            // Re-apply filter if user is searching
+            filterReports();
+        }
+
+        // Search Filter
+        function filterReports() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            const clearBtn = document.getElementById('clear-search');
+            const cards = document.querySelectorAll('#cards-container > div');
+            const noResults = document.getElementById('no-results');
+
+            if (query.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+
+            let visibleCardsCount = 0;
+
+            cards.forEach(card => {
+                const items = card.querySelectorAll('.card-items-list > div');
+                let hasMatch = false;
+
+                items.forEach(item => {
+                    const title = item.getAttribute('data-title') || '';
+                    if (title.includes(query)) {
+                        item.classList.remove('hidden');
+                        hasMatch = true;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+
+                if (hasMatch) {
+                    card.classList.remove('hidden');
+                    visibleCardsCount++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            if (visibleCardsCount === 0 && query.length > 0) {
+                noResults.classList.remove('hidden');
+            } else {
+                noResults.classList.add('hidden');
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            filterReports();
+        }
+
+        // Handle link click toast notification
+        function onLinkClick(e, title, url) {
+            if (isEditMode) {
+                e.preventDefault();
+                showToast(`กำลังเปิดโหมดแก้ไข สามารถกดปุ่มดินสอเพื่อแก้ไขลิงก์ได้`, 'fa-info-circle');
+                return;
+            }
+            showToast(`กำลังเปิดรายงาน: ${title}...`, 'fa-arrow-up-right-from-square');
+        }
+
+        // Toggle Favorite Star State
+        function toggleFav(catId, itemId) {
+            const cat = categories.find(c => c.id === catId);
+            if (cat) {
+                const item = cat.items.find(i => i.id === itemId);
+                if (item) {
+                    item.fav = !item.fav;
+                    saveData();
+                    showToast(item.fav ? `เพิ่ม "${item.title}" เข้าในรายการโปรด` : `ลบออกจากรายการโปรดแล้ว`, 'fa-star');
+                }
+            }
+        }
+
+        // Modal & Form Handlers
+        function setupIconPreviewListener() {
+            const iconInput = document.getElementById('link-icon');
+            const iconPreview = document.getElementById('icon-preview');
+            iconInput.addEventListener('input', () => {
+                iconPreview.innerHTML = `<i class="${iconInput.value || 'fa-solid fa-link'}"></i>`;
+            });
+        }
+
+        function openAddModal() {
+            document.getElementById('modal-title').innerHTML = `<i class="fa-solid fa-plus text-emerald-500"></i> <span>เพิ่มลิงก์รายงานใหม่</span>`;
+            document.getElementById('edit-link-id').value = '';
+            document.getElementById('link-title').value = '';
+            document.getElementById('link-url').value = '';
+            document.getElementById('link-icon').value = 'fa-solid fa-file-lines';
+            document.getElementById('icon-preview').innerHTML = `<i class="fa-solid fa-file-lines"></i>`;
+            document.getElementById('link-modal').classList.remove('hidden');
+        }
+
+        function openEditModal(catId, itemId) {
+            const cat = categories.find(c => c.id === catId);
+            if (!cat) return;
+            const item = cat.items.find(i => i.id === itemId);
+            if (!item) return;
+
+            document.getElementById('modal-title').innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-500"></i> <span>แก้ไขลิงก์รายงาน</span>`;
+            document.getElementById('edit-link-id').value = `${catId}||${itemId}`;
+            document.getElementById('link-category').value = catId;
+            document.getElementById('link-title').value = item.title;
+            document.getElementById('link-url').value = item.url;
+            document.getElementById('link-icon').value = item.icon || 'fa-solid fa-file-lines';
+            document.getElementById('icon-preview').innerHTML = `<i class="${item.icon || 'fa-solid fa-file-lines'}"></i>`;
+            document.getElementById('link-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('link-modal').classList.add('hidden');
+        }
+
+        function saveLink(e) {
+            e.preventDefault();
+            const editKey = document.getElementById('edit-link-id').value;
+            const targetCatId = document.getElementById('link-category').value;
+            const title = document.getElementById('link-title').value.trim();
+            const url = document.getElementById('link-url').value.trim();
+            const icon = document.getElementById('link-icon').value.trim() || 'fa-solid fa-file-lines';
+
+            if (editKey) {
+                // Updating existing link
+                const [oldCatId, oldItemId] = editKey.split('||');
+                const oldCat = categories.find(c => c.id === oldCatId);
+                if (oldCat) {
+                    const itemIndex = oldCat.items.findIndex(i => i.id === oldItemId);
+                    if (itemIndex > -1) {
+                        const existingFav = oldCat.items[itemIndex].fav;
+                        
+                        // If category changed
+                        if (oldCatId !== targetCatId) {
+                            oldCat.items.splice(itemIndex, 1);
+                            const newCat = categories.find(c => c.id === targetCatId);
+                            if (newCat) {
+                                newCat.items.push({ id: oldItemId, title, url, icon, fav: existingFav });
+                            }
+                        } else {
+                            oldCat.items[itemIndex] = { ...oldCat.items[itemIndex], title, url, icon };
+                        }
+                    }
+                }
+                showToast('อัปเดตข้อมูลรายงานเรียบร้อยแล้ว', 'fa-circle-check');
+            } else {
+                // Adding new link
+                const targetCat = categories.find(c => c.id === targetCatId);
+                if (targetCat) {
+                    const newItem = {
+                        id: 'item-' + Date.now(),
+                        title,
+                        url,
+                        icon,
+                        fav: false
+                    };
+                    targetCat.items.push(newItem);
+                    showToast('เพิ่มรายงานใหม่เรียบร้อยแล้ว', 'fa-circle-check');
+                }
+            }
+
+            closeModal();
+            saveData();
+        }
+
+        // Confirmation Delete Action
+        function confirmDeleteItem(catId, itemId, title) {
+            const modal = document.getElementById('confirm-modal');
+            document.getElementById('confirm-title').innerText = 'ยืนยันการลบรายงาน';
+            document.getElementById('confirm-message').innerText = `คุณแน่ใจหรือไม่ว่าต้องการลบรายการ "${title}"?`;
+            
+            const confirmBtn = document.getElementById('confirm-action-btn');
+            confirmBtn.onclick = () => {
+                deleteItem(catId, itemId);
+                closeConfirmModal();
+            };
+            modal.classList.remove('hidden');
+        }
+
+        function deleteItem(catId, itemId) {
+            const cat = categories.find(c => c.id === catId);
+            if (cat) {
+                cat.items = cat.items.filter(i => i.id !== itemId);
+                saveData();
+                showToast('ลบรายการรายงานเรียบร้อยแล้ว', 'fa-trash-can');
+            }
+        }
+
+        // Reset Data to Initial Default Seed
+        function confirmReset() {
+            const modal = document.getElementById('confirm-modal');
+            document.getElementById('confirm-title').innerText = 'รีเซ็ตค่าเริ่มต้น';
+            document.getElementById('confirm-message').innerText = 'ระบบจะล้างข้อมูลที่แก้ไขและคืนค่าลิงก์รายงานเดิมทั้งหมดจากต้นฉบับ คุณแน่ใจหรือไม่?';
+            
+            const confirmBtn = document.getElementById('confirm-action-btn');
+            confirmBtn.onclick = () => {
+                localStorage.removeItem('fin_dashboard_reports');
+                categories = JSON.parse(JSON.stringify(initialCategories));
+                renderDashboard();
+                closeConfirmModal();
+                showToast('คืนค่ารายการเริ่มต้นเรียบร้อยแล้ว', 'fa-rotate-right');
+            };
+            modal.classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirm-modal').classList.add('hidden');
+        }
+
+        // Notification Toast Engine
+        function showToast(message, iconClass = 'fa-circle-check') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMessage.innerText = message;
+            toastIcon.className = `fa-solid ${iconClass} text-emerald-400 dark:text-emerald-600`;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // Run application on load
+        window.onload = function() {
+            initApp();
+        };
+    </script>
+</body>
+</html>
